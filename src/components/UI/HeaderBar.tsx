@@ -7,14 +7,19 @@ import {
   Share,
   Grid,
   ChevronDown,
+  User,
+  Sparkles,
 } from 'lucide-react-native';
 import { triggerHaptic } from '../../services/haptics';
 
 interface HeaderBarProps {
   boardTitle: string;
   gridVisible: boolean;
+  hasMannequin: boolean;
   onOpenOutfits: () => void;
   onOpenWardrobe: () => void;
+  onOpenMannequin: () => void;
+  onOpenStylist: () => void;
   onToggleGrid: () => void;
   onExport: () => void;
 }
@@ -22,8 +27,11 @@ interface HeaderBarProps {
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   boardTitle,
   gridVisible,
+  hasMannequin,
   onOpenOutfits,
   onOpenWardrobe,
+  onOpenMannequin,
+  onOpenStylist,
   onToggleGrid,
   onExport,
 }) => {
@@ -41,25 +49,41 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <Layers size={16} color="#18181B" />
+          <Layers size={15} color="#18181B" />
           <Text style={styles.outfitTitle} numberOfLines={1}>
             {boardTitle}
           </Text>
-          <ChevronDown size={14} color="#71717A" />
+          <ChevronDown size={13} color="#71717A" />
         </TouchableOpacity>
 
         {/* Right Action Icons */}
         <View style={styles.rightActions}>
-          {/* Toggle Dot Grid */}
+          {/* Mannequin / Figur Button */}
           <TouchableOpacity
-            style={[styles.actionIconBtn, gridVisible && styles.actionIconBtnActive]}
+            style={[styles.actionPillBtn, hasMannequin && styles.mannequinPillActive]}
             onPress={() => {
               triggerHaptic('light');
-              onToggleGrid();
+              onOpenMannequin();
             }}
             activeOpacity={0.7}
           >
-            <Grid size={18} color={gridVisible ? '#18181B' : '#A1A1AA'} />
+            <User size={15} color={hasMannequin ? '#FFFFFF' : '#18181B'} />
+            <Text style={[styles.actionPillText, hasMannequin && styles.mannequinPillTextActive]}>
+              Figur
+            </Text>
+          </TouchableOpacity>
+
+          {/* AI Stylist Review Button */}
+          <TouchableOpacity
+            style={[styles.actionPillBtn, styles.aiPillBtn]}
+            onPress={() => {
+              triggerHaptic('medium');
+              onOpenStylist();
+            }}
+            activeOpacity={0.7}
+          >
+            <Sparkles size={14} color="#8B5CF6" />
+            <Text style={[styles.actionPillText, { color: '#8B5CF6' }]}>Stylist</Text>
           </TouchableOpacity>
 
           {/* Open Wardrobe Bottom Sheet */}
@@ -71,8 +95,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <ShoppingBag size={16} color="#18181B" />
-            <Text style={styles.wardrobeBtnText}>Kleiderschrank</Text>
+            <ShoppingBag size={15} color="#18181B" />
+          </TouchableOpacity>
+
+          {/* Toggle Dot Grid */}
+          <TouchableOpacity
+            style={[styles.actionIconBtn, gridVisible && styles.actionIconBtnActive]}
+            onPress={() => {
+              triggerHaptic('light');
+              onToggleGrid();
+            }}
+            activeOpacity={0.7}
+          >
+            <Grid size={16} color={gridVisible ? '#18181B' : '#A1A1AA'} />
           </TouchableOpacity>
 
           {/* Export Moodboard */}
@@ -84,7 +119,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <Share size={16} color="#FFFFFF" />
+            <Share size={15} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -94,7 +129,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
     borderBottomWidth: 1,
     borderBottomColor: '#E4E4E7',
     zIndex: 1000,
@@ -103,33 +138,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   outfitSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F4F4F5',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-    maxWidth: '45%',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 18,
+    gap: 5,
+    maxWidth: '38%',
   },
   outfitTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#18181B',
   },
   rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+  },
+  actionPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F4F4F5',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  mannequinPillActive: {
+    backgroundColor: '#18181B',
+  },
+  actionPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#18181B',
+  },
+  mannequinPillTextActive: {
+    color: '#FFFFFF',
+  },
+  aiPillBtn: {
+    backgroundColor: '#F5F3FF',
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+  },
+  wardrobeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F4F4F5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F4F4F5',
     alignItems: 'center',
     justifyContent: 'center',
@@ -137,24 +205,10 @@ const styles = StyleSheet.create({
   actionIconBtnActive: {
     backgroundColor: '#E4E4E7',
   },
-  wardrobeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F4F4F5',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
-  wardrobeBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#18181B',
-  },
   exportBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#18181B',
     alignItems: 'center',
     justifyContent: 'center',

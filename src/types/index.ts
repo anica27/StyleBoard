@@ -46,6 +46,8 @@ export interface CanvasItem {
   rotation: number; // in radians
   zIndex: number;
   flippedX?: boolean;
+  isMannequin?: boolean;
+  mannequinType?: 'dressform' | 'female' | 'male' | 'custom';
 }
 
 export interface Moodboard {

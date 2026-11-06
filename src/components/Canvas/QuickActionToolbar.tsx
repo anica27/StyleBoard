@@ -8,15 +8,18 @@ import {
   Copy,
   Trash2,
   FlipHorizontal2,
+  Sparkles,
   X,
 } from 'lucide-react-native';
 import { triggerHaptic } from '../../services/haptics';
 
 interface QuickActionToolbarProps {
   visible: boolean;
+  isMannequin?: boolean;
   onBringForward: () => void;
   onSendBackward: () => void;
   onCrop: () => void;
+  onAICrop?: () => void;
   onDuplicate: () => void;
   onFlipHorizontal: () => void;
   onDelete: () => void;
@@ -25,9 +28,11 @@ interface QuickActionToolbarProps {
 
 export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
   visible,
+  isMannequin = false,
   onBringForward,
   onSendBackward,
   onCrop,
+  onAICrop,
   onDuplicate,
   onFlipHorizontal,
   onDelete,
@@ -52,7 +57,7 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
           onPress={() => handleAction(onBringForward)}
           activeOpacity={0.7}
         >
-          <BringToFront size={18} color="#18181B" />
+          <BringToFront size={17} color="#18181B" />
           <Text style={styles.btnLabel}>Vor</Text>
         </TouchableOpacity>
 
@@ -64,21 +69,40 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
           onPress={() => handleAction(onSendBackward)}
           activeOpacity={0.7}
         >
-          <SendToBack size={18} color="#18181B" />
+          <SendToBack size={17} color="#18181B" />
           <Text style={styles.btnLabel}>Zurück</Text>
         </TouchableOpacity>
 
-        <View style={styles.divider} />
+        {/* Only show Crop & AI Crop if not a Mannequin */}
+        {!isMannequin && (
+          <>
+            <View style={styles.divider} />
 
-        {/* Manual Crop */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => handleAction(onCrop)}
-          activeOpacity={0.7}
-        >
-          <Crop size={18} color="#18181B" />
-          <Text style={styles.btnLabel}>Crop</Text>
-        </TouchableOpacity>
+            {/* AI Crop */}
+            {onAICrop && (
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.aiBtn]}
+                onPress={() => handleAction(onAICrop, 'medium')}
+                activeOpacity={0.7}
+              >
+                <Sparkles size={17} color="#8B5CF6" />
+                <Text style={[styles.btnLabel, styles.aiLabel]}>KI Crop</Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={styles.divider} />
+
+            {/* Manual Crop */}
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => handleAction(onCrop)}
+              activeOpacity={0.7}
+            >
+              <Crop size={17} color="#18181B" />
+              <Text style={styles.btnLabel}>Crop</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <View style={styles.divider} />
 
@@ -88,7 +112,7 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
           onPress={() => handleAction(onFlipHorizontal)}
           activeOpacity={0.7}
         >
-          <FlipHorizontal2 size={18} color="#18181B" />
+          <FlipHorizontal2 size={17} color="#18181B" />
           <Text style={styles.btnLabel}>Spiegeln</Text>
         </TouchableOpacity>
 
@@ -100,7 +124,7 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
           onPress={() => handleAction(onDuplicate)}
           activeOpacity={0.7}
         >
-          <Copy size={18} color="#18181B" />
+          <Copy size={17} color="#18181B" />
           <Text style={styles.btnLabel}>Kopieren</Text>
         </TouchableOpacity>
 
@@ -108,12 +132,14 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
 
         {/* Delete */}
         <TouchableOpacity
-          style={[styles.actionBtn, styles.deleteBtn]}
+          style={styles.actionBtn}
           onPress={() => handleAction(onDelete, 'warning')}
           activeOpacity={0.7}
         >
-          <Trash2 size={18} color="#DC2626" />
-          <Text style={[styles.btnLabel, styles.deleteText]}>Löschen</Text>
+          <Trash2 size={17} color="#DC2626" />
+          <Text style={[styles.btnLabel, styles.deleteText]}>
+            {isMannequin ? 'Figur löschen' : 'Löschen'}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -124,7 +150,7 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
           onPress={() => handleAction(onDeselect)}
           activeOpacity={0.7}
         >
-          <X size={18} color="#71717A" />
+          <X size={17} color="#71717A" />
         </TouchableOpacity>
       </View>
     </View>
@@ -135,8 +161,8 @@ const styles = StyleSheet.create({
   floatingWrapper: {
     position: 'absolute',
     bottom: 24,
-    left: 16,
-    right: 16,
+    left: 12,
+    right: 12,
     alignItems: 'center',
     zIndex: 9999,
   },
@@ -146,7 +172,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -156,8 +182,8 @@ const styles = StyleSheet.create({
     borderColor: '#E4E4E7',
   },
   actionBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 7,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -169,14 +195,18 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    height: 24,
+    height: 22,
     backgroundColor: '#F4F4F5',
-    marginHorizontal: 2,
-  },
-  deleteBtn: {
-    // slight danger tint
+    marginHorizontal: 1,
   },
   deleteText: {
     color: '#DC2626',
+  },
+  aiBtn: {
+    // subtle accent
+  },
+  aiLabel: {
+    color: '#8B5CF6',
+    fontWeight: '600',
   },
 });

@@ -10,6 +10,42 @@ export interface StarterAssetDef {
   height: number;
 }
 
+export interface MannequinDef {
+  id: 'dressform' | 'female' | 'male';
+  name: string;
+  description: string;
+  asset: any;
+  width: number;
+  height: number;
+}
+
+export const MANNEQUIN_DEFS: MannequinDef[] = [
+  {
+    id: 'female',
+    name: 'Damen-Silhouette',
+    description: 'Elegante Ganzkörper-Modell-Silhouette',
+    asset: require('../../assets/starter/female_mannequin.png'),
+    width: 300,
+    height: 600,
+  },
+  {
+    id: 'dressform',
+    name: 'Schneiderpuppe',
+    description: 'Klassische Pariser Dressform auf Holzfuß',
+    asset: require('../../assets/starter/dressform.png'),
+    width: 300,
+    height: 520,
+  },
+  {
+    id: 'male',
+    name: 'Herren-Silhouette',
+    description: 'Minimalistische maskuline Modell-Silhouette',
+    asset: require('../../assets/starter/male_mannequin.png'),
+    width: 320,
+    height: 620,
+  },
+];
+
 export const STARTER_ASSET_DEFS: StarterAssetDef[] = [
   {
     id: 'starter_trenchcoat',

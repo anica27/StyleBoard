@@ -14,6 +14,8 @@ import { WardrobeDrawer } from '../src/components/Wardrobe/WardrobeDrawer';
 import { OutfitManagerModal } from '../src/components/Outfits/OutfitManagerModal';
 import { ImageCropModal } from '../src/components/Crop/ImageCropModal';
 import { ExportModal } from '../src/components/UI/ExportModal';
+import { MannequinSelectorModal } from '../src/components/Mannequin/MannequinSelectorModal';
+import { AIStylistModal } from '../src/components/UI/AIStylistModal';
 import { CanvasItem, Moodboard, WardrobeItem } from '../src/types';
 import {
   loadStoredWardrobe,
@@ -24,6 +26,7 @@ import {
   saveActiveBoardId,
 } from '../src/services/storage';
 import { triggerHaptic } from '../src/services/haptics';
+import { aiIsolateClothingItem } from '../src/services/aiService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -40,6 +43,9 @@ export default function StyleBoardScreen() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
   const [isOutfitsOpen, setIsOutfitsOpen] = useState(false);
   const [isCropOpen, setIsCropOpen] = useState(false);
+  const [isMannequinOpen, setIsMannequinOpen] = useState(false);
+  const [isStylistOpen, setIsStylistOpen] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [exportedImageUri, setExportedImageUri] = useState<string | null>(null);
 
   const canvasRef = useRef<any>(null);
@@ -65,7 +71,6 @@ export default function StyleBoardScreen() {
     initApp();
   }, []);
 
-  // Save changes to storage
   const updateBoardsState = (newBoards: Moodboard[]) => {
     setBoards(newBoards);
     saveStoredBoards(newBoards);
@@ -79,6 +84,7 @@ export default function StyleBoardScreen() {
   const activeBoard = boards.find((b) => b.id === activeBoardId) || boards[0];
   const activeItems = activeBoard?.items || [];
   const selectedItem = activeItems.find((i) => i.id === selectedItemId) || null;
+  const currentMannequin = activeItems.find((i) => i.isMannequin) || null;
 
   // 2. Canvas Item Mutations
   const handleUpdateItem = (
@@ -192,8 +198,6 @@ export default function StyleBoardScreen() {
 
     const nextItems = activeBoard.items.map((item) => {
       if (item.id === itemId) {
-        // Calculate new display dimensions preserving natural aspect ratio
-        const currentScale = item.scale;
         const aspect = width / Math.max(1, height);
         const newDisplayWidth = item.width;
         const newDisplayHeight = item.width / aspect;
@@ -215,13 +219,94 @@ export default function StyleBoardScreen() {
     updateBoardsState(updatedBoards);
   };
 
-  // 3. Wardrobe Interactions
+  // Gemini AI Smart Cutout / Isolator
+  const handleAICrop = async () => {
+    if (!selectedItem || !activeBoard) return;
+
+    try {
+      setIsAiProcessing(true);
+      triggerHaptic('medium');
+
+      const sourceUri = selectedItem.originalUri || selectedItem.uri;
+      const result = await aiIsolateClothingItem(sourceUri);
+
+      // Apply cropped result to canvas item
+      handleApplyCrop(selectedItem.id, result.uri, result.width, result.height);
+
+      triggerHaptic('success');
+      Alert.alert(
+        '✨ KI-Zuschnitt erfolgreich',
+        result.stylingTip
+          ? `Erkannt: ${result.detectedName || 'Kleidungsstück'}\n\nTipp: ${result.stylingTip}`
+          : 'Das Kleidungsstück wurde präzise freigestellt.'
+      );
+    } catch (err: any) {
+      console.error('AI Crop failed:', err);
+      triggerHaptic('error');
+      Alert.alert('KI-Fehler', err?.message || 'Zuschnitt mit KI fehlgeschlagen.');
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  // 3. Mannequin Operations (Hinzufügen & Löschen)
+  const handleAddMannequin = (
+    type: 'dressform' | 'female' | 'male' | 'custom',
+    uri: string,
+    width: number,
+    height: number
+  ) => {
+    if (!activeBoard) return;
+
+    // Remove existing mannequin if present
+    const nonMannequinItems = activeBoard.items.filter((i) => !i.isMannequin);
+
+    const aspect = width / Math.max(1, height);
+    const targetW = 240;
+    const targetH = targetW / aspect;
+
+    const newMannequinItem: CanvasItem = {
+      id: `mannequin_${Date.now()}`,
+      uri,
+      originalUri: uri,
+      x: SCREEN_WIDTH / 2 - targetW / 2,
+      y: 70,
+      width: targetW,
+      height: targetH,
+      scale: 1,
+      rotation: 0,
+      zIndex: 0, // place in background behind clothing
+      isMannequin: true,
+      mannequinType: type,
+    };
+
+    const nextItems = [newMannequinItem, ...nonMannequinItems];
+    const updatedBoards = boards.map((b) =>
+      b.id === activeBoard.id ? { ...b, items: nextItems, updatedAt: Date.now() } : b
+    );
+    updateBoardsState(updatedBoards);
+    setSelectedItemId(newMannequinItem.id);
+  };
+
+  const handleRemoveMannequin = () => {
+    if (!activeBoard) return;
+
+    const nextItems = activeBoard.items.filter((i) => !i.isMannequin);
+    const updatedBoards = boards.map((b) =>
+      b.id === activeBoard.id ? { ...b, items: nextItems, updatedAt: Date.now() } : b
+    );
+    updateBoardsState(updatedBoards);
+    if (selectedItem?.isMannequin) {
+      setSelectedItemId(null);
+    }
+  };
+
+  // 4. Wardrobe Interactions
   const handlePlaceFromWardrobe = (item: WardrobeItem) => {
     if (!activeBoard) return;
 
     const maxZ = Math.max(...activeBoard.items.map((i) => i.zIndex), 0);
-    // Center element on canvas with default scaling
-    const targetW = 200;
+    const targetW = 180;
     const aspect = item.width / Math.max(1, item.height);
     const targetH = targetW / aspect;
 
@@ -230,8 +315,8 @@ export default function StyleBoardScreen() {
       wardrobeItemId: item.id,
       uri: item.uri,
       originalUri: item.uri,
-      x: SCREEN_WIDTH / 2 - targetW / 2 + (Math.random() * 40 - 20),
-      y: SCREEN_HEIGHT / 3 - targetH / 2 + (Math.random() * 40 - 20),
+      x: SCREEN_WIDTH / 2 - targetW / 2 + (Math.random() * 30 - 15),
+      y: SCREEN_HEIGHT / 3 - targetH / 2 + (Math.random() * 30 - 15),
       width: targetW,
       height: targetH,
       scale: 1,
@@ -270,7 +355,7 @@ export default function StyleBoardScreen() {
     updateWardrobeState(nextWardrobe);
   };
 
-  // 4. Board / Outfit Management
+  // 5. Board / Outfit Management
   const handleSelectBoard = (boardId: string) => {
     setActiveBoardId(boardId);
     saveActiveBoardId(boardId);
@@ -292,7 +377,6 @@ export default function StyleBoardScreen() {
     setSelectedItemId(null);
   };
 
-  // 1:1 Duplicate board (allows testing alternative shoes/accessories)
   const handleDuplicateBoard = (sourceBoardId: string) => {
     const source = boards.find((b) => b.id === sourceBoardId);
     if (!source) return;
@@ -333,14 +417,13 @@ export default function StyleBoardScreen() {
     }
   };
 
-  // 5. Clean Moodboard Export
+  // 6. Clean Moodboard Export
   const handleExportMoodboard = async () => {
     try {
-      setSelectedItemId(null); // deselect to hide selection border
-      setIsExporting(true); // hide dot-grid and action HUDs
+      setSelectedItemId(null);
+      setIsExporting(true);
       triggerHaptic('medium');
 
-      // Allow one frame for state render
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       if (!canvasRef.current) {
@@ -377,8 +460,11 @@ export default function StyleBoardScreen() {
       <HeaderBar
         boardTitle={activeBoard?.title || 'StyleBoard'}
         gridVisible={gridVisible}
+        hasMannequin={!!currentMannequin}
         onOpenOutfits={() => setIsOutfitsOpen(true)}
         onOpenWardrobe={() => setIsWardrobeOpen(true)}
+        onOpenMannequin={() => setIsMannequinOpen(true)}
+        onOpenStylist={() => setIsStylistOpen(true)}
         onToggleGrid={() => setGridVisible((v) => !v)}
         onExport={handleExportMoodboard}
       />
@@ -398,9 +484,11 @@ export default function StyleBoardScreen() {
       {/* Floating Quick Action Overlay when element is selected */}
       <QuickActionToolbar
         visible={!!selectedItemId && !isExporting}
+        isMannequin={selectedItem?.isMannequin}
         onBringForward={handleBringForward}
         onSendBackward={handleSendBackward}
         onCrop={() => setIsCropOpen(true)}
+        onAICrop={handleAICrop}
         onDuplicate={handleDuplicateItem}
         onFlipHorizontal={handleFlipHorizontal}
         onDelete={handleDeleteItem}
@@ -429,6 +517,24 @@ export default function StyleBoardScreen() {
         onDuplicateBoard={handleDuplicateBoard}
         onRenameBoard={handleRenameBoard}
         onDeleteBoard={handleDeleteBoard}
+      />
+
+      {/* Mannequin / Figur Modal */}
+      <MannequinSelectorModal
+        visible={isMannequinOpen}
+        currentMannequin={currentMannequin}
+        onClose={() => setIsMannequinOpen(false)}
+        onAddMannequin={handleAddMannequin}
+        onRemoveMannequin={handleRemoveMannequin}
+      />
+
+      {/* Gemini AI Stylist Modal */}
+      <AIStylistModal
+        visible={isStylistOpen}
+        boardTitle={activeBoard?.title || 'Outfit'}
+        items={activeItems}
+        wardrobe={wardrobe}
+        onClose={() => setIsStylistOpen(false)}
       />
 
       {/* Manual Rectangle Crop Modal */}
