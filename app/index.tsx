@@ -252,6 +252,19 @@ export default function StyleBoardScreen() {
     updateWardrobeState(nextWardrobe);
   };
 
+  const handleUpdateWardrobeItem = (
+    itemId: string,
+    updates: Partial<Pick<WardrobeItem, 'name' | 'category' | 'uri'>>
+  ) => {
+    const nextWardrobe = wardrobe.map((item) => {
+      if (item.id === itemId) {
+        return { ...item, ...updates };
+      }
+      return item;
+    });
+    updateWardrobeState(nextWardrobe);
+  };
+
   const handleDeleteWardrobeItem = (itemId: string) => {
     const nextWardrobe = wardrobe.filter((w) => w.id !== itemId);
     updateWardrobeState(nextWardrobe);
@@ -401,6 +414,7 @@ export default function StyleBoardScreen() {
         onClose={() => setIsWardrobeOpen(false)}
         onSelectItem={handlePlaceFromWardrobe}
         onAddItem={handleAddWardrobeItem}
+        onUpdateItem={handleUpdateWardrobeItem}
         onDeleteItem={handleDeleteWardrobeItem}
       />
 
