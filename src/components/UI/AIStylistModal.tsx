@@ -20,6 +20,7 @@ interface AIStylistModalProps {
   items: CanvasItem[];
   wardrobe: WardrobeItem[];
   onClose: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const AIStylistModal: React.FC<AIStylistModalProps> = ({
@@ -28,6 +29,7 @@ export const AIStylistModal: React.FC<AIStylistModalProps> = ({
   items,
   wardrobe,
   onClose,
+  onOpenSettings,
 }) => {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
@@ -109,6 +111,17 @@ export const AIStylistModal: React.FC<AIStylistModalProps> = ({
               <View style={styles.errorBox}>
                 <Text style={styles.errorTitle}>Hinweis</Text>
                 <Text style={styles.errorText}>{error}</Text>
+                {onOpenSettings && (
+                  <TouchableOpacity
+                    style={[styles.retryBtn, { backgroundColor: '#18181B', marginTop: 4 }]}
+                    onPress={() => {
+                      onClose();
+                      onOpenSettings();
+                    }}
+                  >
+                    <Text style={[styles.retryBtnText, { color: '#FFFFFF' }]}>API-Key eingeben</Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity style={styles.retryBtn} onPress={runAnalysis}>
                   <RotateCcw size={16} color="#18181B" />
                   <Text style={styles.retryBtnText}>Erneut versuchen</Text>

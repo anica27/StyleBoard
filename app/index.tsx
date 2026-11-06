@@ -16,6 +16,7 @@ import { ImageCropModal } from '../src/components/Crop/ImageCropModal';
 import { ExportModal } from '../src/components/UI/ExportModal';
 import { MannequinSelectorModal } from '../src/components/Mannequin/MannequinSelectorModal';
 import { AIStylistModal } from '../src/components/UI/AIStylistModal';
+import { AISettingsModal } from '../src/components/UI/AISettingsModal';
 import { CanvasItem, Moodboard, WardrobeItem } from '../src/types';
 import {
   loadStoredWardrobe,
@@ -45,6 +46,7 @@ export default function StyleBoardScreen() {
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isMannequinOpen, setIsMannequinOpen] = useState(false);
   const [isStylistOpen, setIsStylistOpen] = useState(false);
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [exportedImageUri, setExportedImageUri] = useState<string | null>(null);
 
@@ -243,7 +245,11 @@ export default function StyleBoardScreen() {
     } catch (err: any) {
       console.error('AI Crop failed:', err);
       triggerHaptic('error');
-      Alert.alert('KI-Fehler', err?.message || 'Zuschnitt mit KI fehlgeschlagen.');
+      if (err?.message?.includes('Kein API-Key')) {
+        setIsAiSettingsOpen(true);
+      } else {
+        Alert.alert('KI-Fehler', err?.message || 'Zuschnitt mit KI fehlgeschlagen.');
+      }
     } finally {
       setIsAiProcessing(false);
     }
@@ -535,6 +541,7 @@ export default function StyleBoardScreen() {
         items={activeItems}
         wardrobe={wardrobe}
         onClose={() => setIsStylistOpen(false)}
+        onOpenSettings={() => setIsAiSettingsOpen(true)}
       />
 
       {/* Manual Rectangle Crop Modal */}
@@ -551,6 +558,12 @@ export default function StyleBoardScreen() {
         imageUri={exportedImageUri}
         boardTitle={activeBoard?.title || 'StyleBoard Outfit'}
         onClose={() => setExportedImageUri(null)}
+      />
+
+      {/* Local AI Settings Modal */}
+      <AISettingsModal
+        visible={isAiSettingsOpen}
+        onClose={() => setIsAiSettingsOpen(false)}
       />
     </View>
   );
