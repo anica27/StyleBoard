@@ -13,6 +13,7 @@ import { X, Sparkles, Star, Lightbulb, CheckCircle2, RotateCcw } from 'lucide-re
 import { AIStylistReview, aiReviewOutfitComposition } from '../../services/aiService';
 import { CanvasItem, WardrobeItem } from '../../types';
 import { triggerHaptic } from '../../services/haptics';
+import { SwipeableBottomSheet } from './SwipeableBottomSheet';
 
 interface AIStylistModalProps {
   visible: boolean;
@@ -77,13 +78,13 @@ export const AIStylistModal: React.FC<AIStylistModalProps> = ({
   }, [visible]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.backdrop}>
-        <View style={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <View style={styles.handleBar} />
-
-          {/* Header */}
-          <View style={styles.header}>
+    <SwipeableBottomSheet
+      visible={visible}
+      onClose={onClose}
+      contentStyle={[styles.sheetContent, { maxHeight: '86%', paddingBottom: Math.max(insets.bottom, 20) }]}
+    >
+      {/* Header */}
+      <View style={styles.header}>
             <View style={styles.titleRow}>
               <View style={styles.iconCircle}>
                 <Sparkles size={18} color="#FFFFFF" />
@@ -187,9 +188,7 @@ export const AIStylistModal: React.FC<AIStylistModalProps> = ({
               </View>
             ) : null}
           </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </SwipeableBottomSheet>
   );
 };
 

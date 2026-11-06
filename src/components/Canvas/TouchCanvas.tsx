@@ -37,8 +37,12 @@ export const TouchCanvas = forwardRef<any, TouchCanvasProps>(
     },
     ref
   ) => {
-    // Sort items by zIndex so higher zIndex elements render on top
-    const sortedItems = [...items].sort((a, b) => a.zIndex - b.zIndex);
+    // Sort items: Mannequins are ALWAYS at the absolute bottom (behind all clothes)
+    const sortedItems = [...items].sort((a, b) => {
+      if (a.isMannequin && !b.isMannequin) return -1;
+      if (!a.isMannequin && b.isMannequin) return 1;
+      return a.zIndex - b.zIndex;
+    });
 
     return (
       <TouchableWithoutFeedback onPress={() => onSelectItem(null)}>

@@ -112,9 +112,9 @@ export default function StyleBoardScreen() {
   const handleBringForward = () => {
     if (!selectedItemId || !activeBoard) return;
     const currentItem = activeBoard.items.find((i) => i.id === selectedItemId);
-    if (!currentItem) return;
+    if (!currentItem || currentItem.isMannequin) return; // Mannequin stays in background
 
-    const maxZ = Math.max(...activeBoard.items.map((i) => i.zIndex), 0);
+    const maxZ = Math.max(...activeBoard.items.map((i) => i.zIndex), 1);
     const nextItems = activeBoard.items.map((i) =>
       i.id === selectedItemId ? { ...i, zIndex: maxZ + 1 } : i
     );
@@ -129,11 +129,13 @@ export default function StyleBoardScreen() {
   const handleSendBackward = () => {
     if (!selectedItemId || !activeBoard) return;
     const currentItem = activeBoard.items.find((i) => i.id === selectedItemId);
-    if (!currentItem) return;
+    if (!currentItem || currentItem.isMannequin) return; // Mannequin stays in background
 
-    const minZ = Math.min(...activeBoard.items.map((i) => i.zIndex), 1);
+    // Clothes are never pushed below zIndex: 1 so they never slip behind the mannequin
+    const nonMannequinZ = activeBoard.items.filter((i) => !i.isMannequin).map((i) => i.zIndex);
+    const minZ = Math.min(...nonMannequinZ, 1);
     const nextItems = activeBoard.items.map((i) =>
-      i.id === selectedItemId ? { ...i, zIndex: Math.max(0, minZ - 1) } : i
+      i.id === selectedItemId ? { ...i, zIndex: Math.max(1, minZ - 1) } : i
     );
 
     const updatedBoards = boards.map((b) =>
@@ -471,6 +473,7 @@ export default function StyleBoardScreen() {
         onOpenWardrobe={() => setIsWardrobeOpen(true)}
         onOpenMannequin={() => setIsMannequinOpen(true)}
         onOpenStylist={() => setIsStylistOpen(true)}
+        onOpenSettings={() => setIsAiSettingsOpen(true)}
         onToggleGrid={() => setGridVisible((v) => !v)}
         onExport={handleExportMoodboard}
       />

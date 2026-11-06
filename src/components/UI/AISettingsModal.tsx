@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Key, Check, ShieldCheck, ExternalLink } from 'lucide-react-native';
 import { getGeminiApiKey, setGeminiApiKey } from '../../services/aiService';
 import { triggerHaptic } from '../../services/haptics';
+import { SwipeableBottomSheet } from './SwipeableBottomSheet';
 
 interface AISettingsModalProps {
   visible: boolean;
@@ -44,26 +45,26 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.backdrop}>
-        <View style={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <View style={styles.handleBar} />
-
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerTitleRow}>
-              <View style={styles.iconCircle}>
-                <Key size={18} color="#FFFFFF" />
-              </View>
-              <View>
-                <Text style={styles.title}>KI-Einstellungen</Text>
-                <Text style={styles.subtitle}>Google Gemini API-Key</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <X size={20} color="#71717A" />
-            </TouchableOpacity>
+    <SwipeableBottomSheet
+      visible={visible}
+      onClose={onClose}
+      contentStyle={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTitleRow}>
+          <View style={styles.iconCircle}>
+            <Key size={18} color="#FFFFFF" />
           </View>
+          <View>
+            <Text style={styles.title}>KI-Einstellungen</Text>
+            <Text style={styles.subtitle}>Google Gemini API-Key</Text>
+          </View>
+        </View>
+        <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+          <X size={20} color="#71717A" />
+        </TouchableOpacity>
+      </View>
 
           {/* Privacy Banner */}
           <View style={styles.privacyBanner}>
@@ -99,9 +100,7 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
               <Text style={styles.saveBtnText}>Lokal speichern</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
-    </Modal>
+    </SwipeableBottomSheet>
   );
 };
 

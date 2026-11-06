@@ -9,6 +9,7 @@ import {
   ChevronDown,
   User,
   Sparkles,
+  Settings,
 } from 'lucide-react-native';
 import { triggerHaptic } from '../../services/haptics';
 
@@ -20,6 +21,7 @@ interface HeaderBarProps {
   onOpenWardrobe: () => void;
   onOpenMannequin: () => void;
   onOpenStylist: () => void;
+  onOpenSettings: () => void;
   onToggleGrid: () => void;
   onExport: () => void;
 }
@@ -32,6 +34,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   onOpenWardrobe,
   onOpenMannequin,
   onOpenStylist,
+  onOpenSettings,
   onToggleGrid,
   onExport,
 }) => {
@@ -108,6 +111,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             activeOpacity={0.7}
           >
             <Grid size={16} color={gridVisible ? '#18181B' : '#A1A1AA'} />
+          </TouchableOpacity>
+
+          {/* Settings / API Key */}
+          <TouchableOpacity
+            style={styles.actionIconBtn}
+            onPress={() => {
+              triggerHaptic('light');
+              onOpenSettings();
+            }}
+            activeOpacity={0.7}
+            accessibilityLabel="KI-Einstellungen"
+          >
+            <Settings size={16} color="#18181B" />
           </TouchableOpacity>
 
           {/* Export Moodboard */}

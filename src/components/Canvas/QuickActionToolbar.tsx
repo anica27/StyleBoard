@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import {
-  Layers,
   BringToFront,
   SendToBack,
   Crop,
@@ -51,58 +50,58 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
   return (
     <View style={styles.floatingWrapper} pointerEvents="box-none">
       <View style={styles.container}>
-        {/* Layer Forward */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => handleAction(onBringForward)}
-          activeOpacity={0.7}
-        >
-          <BringToFront size={17} color="#18181B" />
-          <Text style={styles.btnLabel}>Vor</Text>
-        </TouchableOpacity>
-
-        <View style={styles.divider} />
-
-        {/* Layer Backward */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => handleAction(onSendBackward)}
-          activeOpacity={0.7}
-        >
-          <SendToBack size={17} color="#18181B" />
-          <Text style={styles.btnLabel}>Zurück</Text>
-        </TouchableOpacity>
-
-        {/* Only show Crop & AI Crop if not a Mannequin */}
+        {/* Layer Forward & Backward only for clothes (Mannequin stays locked in background) */}
         {!isMannequin && (
           <>
-            <View style={styles.divider} />
-
-            {/* AI Crop */}
-            {onAICrop && (
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.aiBtn]}
-                onPress={() => handleAction(onAICrop, 'medium')}
-                activeOpacity={0.7}
-              >
-                <Sparkles size={17} color="#8B5CF6" />
-                <Text style={[styles.btnLabel, styles.aiLabel]}>KI Crop</Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.divider} />
-
-            {/* Manual Crop */}
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => handleAction(onCrop)}
+              onPress={() => handleAction(onBringForward)}
               activeOpacity={0.7}
             >
-              <Crop size={17} color="#18181B" />
-              <Text style={styles.btnLabel}>Crop</Text>
+              <BringToFront size={17} color="#18181B" />
+              <Text style={styles.btnLabel}>Vor</Text>
             </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => handleAction(onSendBackward)}
+              activeOpacity={0.7}
+            >
+              <SendToBack size={17} color="#18181B" />
+              <Text style={styles.btnLabel}>Zurück</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
           </>
         )}
+
+        {/* AI Crop - available for BOTH clothes and Mannequin / own body photos! */}
+        {onAICrop && (
+          <>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.aiBtn]}
+              onPress={() => handleAction(onAICrop, 'medium')}
+              activeOpacity={0.7}
+            >
+              <Sparkles size={17} color="#8B5CF6" />
+              <Text style={[styles.btnLabel, styles.aiLabel]}>KI Crop</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+          </>
+        )}
+
+        {/* Manual Crop - available for BOTH clothes and Mannequin / own body photos! */}
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => handleAction(onCrop)}
+          activeOpacity={0.7}
+        >
+          <Crop size={17} color="#18181B" />
+          <Text style={styles.btnLabel}>Crop</Text>
+        </TouchableOpacity>
 
         <View style={styles.divider} />
 
@@ -116,17 +115,20 @@ export const QuickActionToolbar: React.FC<QuickActionToolbarProps> = ({
           <Text style={styles.btnLabel}>Spiegeln</Text>
         </TouchableOpacity>
 
-        <View style={styles.divider} />
-
-        {/* Duplicate */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => handleAction(onDuplicate)}
-          activeOpacity={0.7}
-        >
-          <Copy size={17} color="#18181B" />
-          <Text style={styles.btnLabel}>Kopieren</Text>
-        </TouchableOpacity>
+        {/* Duplicate only for clothes */}
+        {!isMannequin && (
+          <>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => handleAction(onDuplicate)}
+              activeOpacity={0.7}
+            >
+              <Copy size={17} color="#18181B" />
+              <Text style={styles.btnLabel}>Kopieren</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <View style={styles.divider} />
 
@@ -202,9 +204,7 @@ const styles = StyleSheet.create({
   deleteText: {
     color: '#DC2626',
   },
-  aiBtn: {
-    // subtle accent
-  },
+  aiBtn: {},
   aiLabel: {
     color: '#8B5CF6',
     fontWeight: '600',

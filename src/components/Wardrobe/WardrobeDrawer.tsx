@@ -33,6 +33,7 @@ import {
   importFromClipboard,
 } from '../../services/imageService';
 import { triggerHaptic } from '../../services/haptics';
+import { SwipeableBottomSheet } from '../UI/SwipeableBottomSheet';
 
 interface WardrobeDrawerProps {
   visible: boolean;
@@ -187,29 +188,23 @@ export const WardrobeDrawer: React.FC<WardrobeDrawerProps> = ({
 
   return (
     <>
-      <Modal visible={visible} animationType="slide" transparent>
-        <View style={styles.backdrop}>
-          <TouchableOpacity
-            style={styles.backdropTouchable}
-            onPress={onClose}
-            activeOpacity={1}
-          />
-          <View style={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            {/* Sheet Handle */}
-            <View style={styles.handleBar} />
-
-            {/* Header */}
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.title}>Kleiderschrank</Text>
-                <Text style={styles.subtitle}>
-                  {wardrobe.length} Teile • Tippe zum Platzieren, Stift zum Einsortieren
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-                <X size={20} color="#71717A" />
-              </TouchableOpacity>
-            </View>
+      <SwipeableBottomSheet
+        visible={visible}
+        onClose={onClose}
+        contentStyle={[styles.sheetContent, { maxHeight: '85%', paddingBottom: Math.max(insets.bottom, 20) }]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Kleiderschrank</Text>
+            <Text style={styles.subtitle}>
+              {wardrobe.length} Teile • Wische nach unten oder tippe zum Platzieren
+            </Text>
+          </View>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+            <X size={20} color="#71717A" />
+          </TouchableOpacity>
+        </View>
 
             {/* Import Actions Bar */}
             <View style={styles.importBar}>
@@ -392,9 +387,7 @@ export const WardrobeDrawer: React.FC<WardrobeDrawerProps> = ({
                 </View>
               )}
             </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      </SwipeableBottomSheet>
 
       {/* MODAL 1: Edit Wardrobe Item (Name & Category Shift) */}
       <Modal visible={!!editingItem} animationType="fade" transparent>

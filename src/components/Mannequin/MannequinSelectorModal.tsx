@@ -23,6 +23,7 @@ import { MANNEQUIN_DEFS } from '../../services/starterData';
 import { CanvasItem } from '../../types';
 import { triggerHaptic } from '../../services/haptics';
 import { pickFromGallery, takePhoto } from '../../services/imageService';
+import { SwipeableBottomSheet } from '../UI/SwipeableBottomSheet';
 
 interface MannequinSelectorModalProps {
   visible: boolean;
@@ -94,28 +95,23 @@ export const MannequinSelectorModal: React.FC<MannequinSelectorModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          onPress={onClose}
-          activeOpacity={1}
-        />
-        <View style={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <View style={styles.handleBar} />
-
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>Figur & Mannequin</Text>
-              <Text style={styles.subtitle}>
-                Wähle eine Modell-Silhouette oder kleide dich selbst virtuell an
-              </Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <X size={20} color="#71717A" />
-            </TouchableOpacity>
-          </View>
+    <SwipeableBottomSheet
+      visible={visible}
+      onClose={onClose}
+      contentStyle={[styles.sheetContent, { maxHeight: '86%', paddingBottom: Math.max(insets.bottom, 20) }]}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Figur & Mannequin</Text>
+          <Text style={styles.subtitle}>
+            Wähle eine Modell-Silhouette oder kleide dich selbst virtuell an
+          </Text>
+        </View>
+        <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+          <X size={20} color="#71717A" />
+        </TouchableOpacity>
+      </View>
 
           {/* If a mannequin is already on board: show status & remove button */}
           {currentMannequin && (
@@ -214,9 +210,7 @@ export const MannequinSelectorModal: React.FC<MannequinSelectorModalProps> = ({
               </View>
             </View>
           </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </SwipeableBottomSheet>
   );
 };
 

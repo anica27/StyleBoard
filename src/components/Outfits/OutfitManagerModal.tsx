@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import { Moodboard } from '../../types';
 import { triggerHaptic } from '../../services/haptics';
+import { SwipeableBottomSheet } from '../UI/SwipeableBottomSheet';
 
 interface OutfitManagerModalProps {
   visible: boolean;
@@ -104,29 +105,23 @@ export const OutfitManagerModal: React.FC<OutfitManagerModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.backdrop}>
-        <TouchableOpacity
-          style={styles.backdropTouchable}
-          onPress={onClose}
-          activeOpacity={1}
-        />
-        <View style={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          {/* Handle */}
-          <View style={styles.handleBar} />
-
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>Meine Outfits</Text>
-              <Text style={styles.subtitle}>
-                Verwalte Moodboards & erstelle Varianten per Duplizieren
-              </Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <X size={20} color="#71717A" />
-            </TouchableOpacity>
-          </View>
+    <SwipeableBottomSheet
+      visible={visible}
+      onClose={onClose}
+      contentStyle={[styles.sheetContent, { maxHeight: '82%', paddingBottom: Math.max(insets.bottom, 20) }]}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Meine Outfits</Text>
+          <Text style={styles.subtitle}>
+            Verwalte Moodboards & erstelle Varianten per Duplizieren
+          </Text>
+        </View>
+        <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+          <X size={20} color="#71717A" />
+        </TouchableOpacity>
+      </View>
 
           {/* Create New Outfit Input / Button */}
           <View style={styles.createNewContainer}>
@@ -265,9 +260,7 @@ export const OutfitManagerModal: React.FC<OutfitManagerModalProps> = ({
               );
             })}
           </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </SwipeableBottomSheet>
   );
 };
 
