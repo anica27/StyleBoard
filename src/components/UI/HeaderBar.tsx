@@ -10,6 +10,7 @@ import {
   User,
   Sparkles,
   Settings,
+  MessageCircle,
 } from 'lucide-react-native';
 import { triggerHaptic } from '../../services/haptics';
 
@@ -76,7 +77,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             </Text>
           </TouchableOpacity>
 
-          {/* AI Stylist Review Button */}
+          {/* AI Stylist Chat Button */}
           <TouchableOpacity
             style={[styles.actionPillBtn, styles.aiPillBtn]}
             onPress={() => {
@@ -85,7 +86,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <Sparkles size={14} color="#8B5CF6" />
+            <MessageCircle size={14} color="#8B5CF6" />
             <Text style={[styles.actionPillText, { color: '#8B5CF6' }]}>Stylist</Text>
           </TouchableOpacity>
 

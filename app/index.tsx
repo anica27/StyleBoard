@@ -15,7 +15,7 @@ import { OutfitManagerModal } from '../src/components/Outfits/OutfitManagerModal
 import { ImageCropModal } from '../src/components/Crop/ImageCropModal';
 import { ExportModal } from '../src/components/UI/ExportModal';
 import { MannequinSelectorModal } from '../src/components/Mannequin/MannequinSelectorModal';
-import { AIStylistModal } from '../src/components/UI/AIStylistModal';
+import { StylistChatDrawer } from '../src/components/Chat/StylistChatDrawer';
 import { AISettingsModal } from '../src/components/UI/AISettingsModal';
 import { CanvasItem, Moodboard, WardrobeItem } from '../src/types';
 import {
@@ -537,8 +537,8 @@ export default function StyleBoardScreen() {
         onRemoveMannequin={handleRemoveMannequin}
       />
 
-      {/* Gemini AI Stylist Modal */}
-      <AIStylistModal
+      {/* Interactive Stylist Chat Drawer */}
+      <StylistChatDrawer
         visible={isStylistOpen}
         boardTitle={activeBoard?.title || 'Outfit'}
         items={activeItems}

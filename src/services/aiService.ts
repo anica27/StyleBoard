@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { cropImageLocally, getImageDimensions } from './imageService';
-import { CropRect, ItemCategory } from '../types';
+import { CropRect, ItemCategory, ChatMessage } from '../types';
 
 const STORAGE_KEY_GEMINI = '@styleboard_gemini_api_key_v1';
 
@@ -51,12 +51,11 @@ export const aiIsolateClothingItem = async (
   const apiKey = await getGeminiApiKey();
 
   if (!apiKey) {
-    throw new Error('Kein API-Key gefunden. Bitte trage deinen Gemini API-Key in den Einstellungen ein.');
+    throw new Error('Kein API-Key hinterlegt. Bitte trage deinen Gemini API-Key in den Einstellungen (Zahnrad oben) ein.');
   }
 
   const naturalDims = await getImageDimensions(sourceUri);
 
-  // Read image as base64 safely across all protocols (file://, http://, data:)
   let base64Data = '';
   if (sourceUri.startsWith('data:')) {
     base64Data = sourceUri.split(',')[1];
@@ -118,7 +117,7 @@ Note: Coordinates in box_2d must be normalized from 0 to 1000 tightly around the
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`KI-Anfrage fehlgeschlagen: ${response.status} - ${errorText}`);
+    throw new Error(`KI-Anfrage fehlgeschlagen (${response.status}): ${errorText}`);
   }
 
   const data = await response.json();
@@ -135,7 +134,6 @@ Note: Coordinates in box_2d must be normalized from 0 to 1000 tightly around the
   if (parsed && Array.isArray(parsed.box_2d) && parsed.box_2d.length === 4) {
     const [ymin, xmin, ymax, xmax] = parsed.box_2d;
 
-    // Convert normalized 0-1000 to pixels
     const originX = Math.max(0, Math.round((xmin / 1000) * naturalDims.width));
     const originY = Math.max(0, Math.round((ymin / 1000) * naturalDims.height));
     const cropW = Math.max(20, Math.round(((xmax - xmin) / 1000) * naturalDims.width));
@@ -172,51 +170,68 @@ Note: Coordinates in box_2d must be normalized from 0 to 1000 tightly around the
   };
 };
 
-export interface AIStylistReview {
-  vibe: string;
-  score: number;
-  review: string;
-  strengths: string[];
-  recommendations: string[];
-}
-
 /**
- * Uses Gemini AI to review an outfit composition on a mannequin / canvas
+ * Interactive Multi-turn Fashion Stylist Chatbot
  */
-export const aiReviewOutfitComposition = async (
-  boardTitle: string,
-  items: { name: string; category?: string }[],
-  hasMannequin: boolean
-): Promise<AIStylistReview> => {
+export const aiChatWithStylist = async (
+  messages: ChatMessage[],
+  context: {
+    boardTitle: string;
+    boardItems: { name: string; category?: string }[];
+    wardrobeItems: { name: string; category?: string }[];
+    hasMannequin: boolean;
+  }
+): Promise<string> => {
   const apiKey = await getGeminiApiKey();
 
   if (!apiKey) {
-    throw new Error('Kein API-Key gefunden. Bitte trage deinen Gemini API-Key in den Einstellungen ein.');
+    throw new Error('Kein API-Key hinterlegt. Bitte trage deinen Gemini API-Key in den Einstellungen (Zahnrad oben) ein.');
   }
 
-  const itemsList = items.map((i) => `- ${i.name} (${i.category || 'Kleidung'})`).join('\n');
+  const wardrobeSummary = context.wardrobeItems.length > 0
+    ? context.wardrobeItems.map((i) => `- ${i.name} [${i.category || 'Kleidung'}]`).join('\n')
+    : '(Kleiderschrank ist noch leer)';
 
-  const prompt = `Du bist ein weltbekannter High-Fashion-Stylist und Mode-Redakteur (wie Vogue/ssense).
-Analysiere folgendes Outfit auf dem Moodboard "${boardTitle}":
-${itemsList}
-Figur/Mannequin vorhanden: ${hasMannequin ? 'Ja (angekleidet)' : 'Nein'}
+  const boardSummary = context.boardItems.length > 0
+    ? context.boardItems.map((i) => `- ${i.name} [${i.category || 'Kleidung'}]`).join('\n')
+    : '(Arbeitsfläche ist noch leer)';
 
-Antworte NUR mit einem validen JSON-Objekt ohne Markdown:
-{
-  "vibe": "Prägnanter Style-Titel (z.B. Effortless Parisian Chic, Modern Tailored Minimalism)",
-  "score": 9,
-  "review": "2-3 inspirierende, stilvolle Sätze zur Outfit-Komposition auf Deutsch.",
-  "strengths": ["Stärke 1", "Stärke 2"],
-  "recommendations": ["Konkrete Empfehlung 1 (z. B. Welche Schuhe/Tasche/Accessoire perfekt passen würde)", "Empfehlung 2"]
-}`;
+  const systemPrompt = `Du bist der persönliche High-Fashion-Stylist und Modeberater in der StyleBoard-App.
+Deine Aufgabe ist es, der Nutzerin/dem Nutzer zu helfen, perfekte Outfits für jeden Anlass zu kreieren (z. B. Themenpartys wie 90er, 80er, Y2K, Sommerhochzeit, Business Casual, Festival, Date Night).
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [{ text: prompt }],
-      },
-    ],
-  };
+KONTEXT DES NUTZERS:
+- Aktuelles Board: "${context.boardTitle}"
+- Aktuell auf dem Board/Mannequin platzierte Teile:
+${boardSummary}
+- Alle im Kleiderschrank verfügbaren Teile:
+${wardrobeSummary}
+- Figur/Mannequin aktiv: ${context.hasMannequin ? 'Ja' : 'Nein'}
+
+DEIN STIL:
+- Warmherzig, inspirierend, stilsicher, wie eine persönliche Stylistin bei Vogue oder Net-a-Porter.
+- Gib konkrete, umsetzbare Tipps (welche Farben, Schnitte, Texturen harmonieren und wie man die Teile trägt, z. B. French Tuck, Rollärmel).
+- Beziehe dich direkt auf die Teile im Kleiderschrank des Nutzers und schlage auch passende Ergänzungen vor.
+- Halte deine Antworten lebendig, übersichtlich (mit Aufzählungspunkten oder Emojis) und nicht zu langatmig. Antworte immer auf Deutsch.`;
+
+  // Format messages for Gemini API
+  const contents = [
+    {
+      role: 'user',
+      parts: [
+        {
+          text: `[SYSTEM-HINWEIS FÜR STYLIST]: ${systemPrompt}\n\n[NUTZER]: ${messages[0]?.text || 'Hallo'}`,
+        },
+      ],
+    },
+  ];
+
+  for (let i = 1; i < messages.length; i++) {
+    const msg = messages[i];
+    contents.push({
+      role: msg.role === 'model' ? 'model' : 'user',
+      parts: [{ text: msg.text }],
+    });
+  }
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
@@ -225,28 +240,21 @@ Antworte NUR mit einem validen JSON-Objekt ohne Markdown:
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ contents }),
     }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Stylist-Anfrage fehlgeschlagen: ${response.status} - ${errorText}`);
+    throw new Error(`Stylist-Chat fehlgeschlagen (${response.status}): ${errorText}`);
   }
 
   const data = await response.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+  const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-  try {
-    return JSON.parse(cleanJson);
-  } catch (err) {
-    return {
-      vibe: 'Modern Minimalist Look',
-      score: 9,
-      review: 'Ein harmonisch zusammengestelltes Outfit mit zeitloser Eleganz.',
-      strengths: ['Harmonische Farbpalette', 'Vielseitig kombinierbar'],
-      recommendations: ['Ergänze zarten Goldschmuck für ein edles Finish'],
-    };
+  if (!reply) {
+    throw new Error('Keine Antwort vom Stylisten erhalten.');
   }
+
+  return reply;
 };

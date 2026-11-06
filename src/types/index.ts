@@ -66,3 +66,10 @@ export interface CropRect {
   width: number;
   height: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: number;
+}
