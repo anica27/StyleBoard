@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -16,13 +17,14 @@ import {
   Send,
   Sparkles,
   Bot,
-  User,
   RotateCcw,
 } from 'lucide-react-native';
 import { ChatMessage, CanvasItem, WardrobeItem } from '../../types';
 import { aiChatWithStylist } from '../../services/aiService';
 import { triggerHaptic } from '../../services/haptics';
 import { SwipeableBottomSheet } from '../UI/SwipeableBottomSheet';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface StylistChatDrawerProps {
   visible: boolean;
@@ -56,7 +58,7 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
     {
       id: 'welcome_1',
       role: 'model',
-      text: `Hallo! 👋 Ich bin dein persönlicher KI-Stylist.\n\nErzähl mir: Welchen Anlass planst du (z. B. eine Themenparty, ein Date oder eine Hochzeit)? Ich stelle dir aus deinen Teilen im Kleiderschrank den perfekten Look zusammen! ✨`,
+      text: `Hallo! 👋 Ich bin dein persönlicher KI-Stylist.\n\nErzähl mir: Welchen Anlass planst du (z. B. eine 90er-Themenparty, ein Date oder eine Sommerhochzeit)? Ich stelle dir aus deinen Teilen im Kleiderschrank den perfekten Look zusammen! ✨`,
       timestamp: Date.now(),
     },
   ]);
@@ -67,7 +69,7 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
     if (visible) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 200);
+      }, 250);
     }
   }, [visible, messages]);
 
@@ -153,9 +155,10 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
     <SwipeableBottomSheet
       visible={visible}
       onClose={onClose}
+      height={SCREEN_HEIGHT * 0.86} // Große, geräumige Höhe (3x größer)
       contentStyle={[
         styles.sheetContent,
-        { maxHeight: '88%', paddingBottom: Math.max(insets.bottom, 12) },
+        { paddingBottom: Math.max(insets.bottom, 14) },
       ]}
     >
       {/* Header */}
@@ -186,7 +189,7 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
         </View>
       </View>
 
-      {/* Messages List */}
+      {/* Messages List - fills remaining space */}
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesScroll}
@@ -234,7 +237,7 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
             </View>
             <View style={[styles.messageBubble, styles.bubbleModel, styles.typingBubble]}>
               <ActivityIndicator size="small" color="#18181B" />
-              <Text style={styles.typingText}>Stylist überlegt...</Text>
+              <Text style={styles.typingText}>Stylist stellt Look zusammen...</Text>
             </View>
           </View>
         )}
@@ -272,7 +275,7 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
             placeholder="z. B. Was ziehe ich zur 90er-Party an?..."
             placeholderTextColor="#A1A1AA"
             multiline
-            maxLength={300}
+            maxLength={350}
           />
           <TouchableOpacity
             style={[
@@ -294,13 +297,15 @@ export const StylistChatDrawer: React.FC<StylistChatDrawerProps> = ({
 const styles = StyleSheet.create({
   sheetContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 16,
+    display: 'flex',
+    flexDirection: 'column',
   },
   header: {
     flexDirection: 'row',
@@ -340,9 +345,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   iconBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F4F4F5',
     alignItems: 'center',
     justifyContent: 'center',
@@ -350,10 +355,10 @@ const styles = StyleSheet.create({
   messagesScroll: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 14,
   },
   messagesContainer: {
-    paddingBottom: 12,
+    paddingBottom: 14,
     gap: 12,
   },
   messageWrapper: {
@@ -368,9 +373,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   modelAvatarSmall: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#8B5CF6',
     alignItems: 'center',
     justifyContent: 'center',
@@ -391,8 +396,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   messageText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 20,
   },
   textUser: {
     color: '#FFFFFF',
@@ -416,7 +421,7 @@ const styles = StyleSheet.create({
     color: '#71717A',
   },
   quickPromptsContainer: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#F4F4F5',
   },
@@ -428,12 +433,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F3FF',
     borderWidth: 1,
     borderColor: '#DDD6FE',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
   quickPromptText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: '#7C3AED',
   },
@@ -442,28 +447,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
+    paddingBottom: 4,
     gap: 8,
   },
   chatInput: {
     flex: 1,
-    minHeight: 40,
-    maxHeight: 90,
+    minHeight: 42,
+    maxHeight: 100,
     backgroundColor: '#F4F4F5',
-    borderRadius: 20,
+    borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#18181B',
   },
   sendBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#18181B',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendBtnDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
 });

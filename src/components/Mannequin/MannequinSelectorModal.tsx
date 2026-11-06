@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -98,7 +99,8 @@ export const MannequinSelectorModal: React.FC<MannequinSelectorModalProps> = ({
     <SwipeableBottomSheet
       visible={visible}
       onClose={onClose}
-      contentStyle={[styles.sheetContent, { maxHeight: '86%', paddingBottom: Math.max(insets.bottom, 20) }]}
+      height={Dimensions.get('window').height * 0.82}
+      contentStyle={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}
     >
       {/* Header */}
       <View style={styles.header}>

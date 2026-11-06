@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -108,7 +109,8 @@ export const OutfitManagerModal: React.FC<OutfitManagerModalProps> = ({
     <SwipeableBottomSheet
       visible={visible}
       onClose={onClose}
-      contentStyle={[styles.sheetContent, { maxHeight: '82%', paddingBottom: Math.max(insets.bottom, 20) }]}
+      height={Dimensions.get('window').height * 0.80}
+      contentStyle={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) }]}
     >
       {/* Header */}
       <View style={styles.header}>

@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Modal, TouchableOpacity, Dimensions } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+  PanResponder,
+} from 'react-native';
 import { triggerHaptic } from '../../services/haptics';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -17,6 +17,7 @@ interface SwipeableBottomSheetProps {
   onClose: () => void;
   children: React.ReactNode;
   contentStyle?: any;
+  height?: number | string;
 }
 
 export const SwipeableBottomSheet: React.FC<SwipeableBottomSheetProps> = ({
@@ -24,66 +25,84 @@ export const SwipeableBottomSheet: React.FC<SwipeableBottomSheetProps> = ({
   onClose,
   children,
   contentStyle,
+  height,
 }) => {
-  const translateY = useSharedValue(0);
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
     if (visible) {
-      translateY.value = 0;
+      translateY.setValue(SCREEN_HEIGHT);
+      Animated.spring(translateY, {
+        toValue: 0,
+        bounciness: 3,
+        speed: 14,
+        useNativeDriver: true,
+      }).start();
     }
   }, [visible]);
 
-  const handleDismiss = () => {
+  const dismiss = () => {
     triggerHaptic('light');
-    onClose();
+    Animated.timing(translateY, {
+      toValue: SCREEN_HEIGHT,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+    });
   };
 
-  // Pan gesture for dragging the sheet downwards
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      // Only allow downward dragging
-      if (event.translationY > 0) {
-        translateY.value = event.translationY;
-      }
+  // PanResponder works reliably on both Android and iOS inside Modals
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 3 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 90 || gestureState.vy > 0.5) {
+          dismiss();
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            bounciness: 4,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
     })
-    .onEnd((event) => {
-      // If dragged down past 100px or flicked down with velocity
-      if (event.translationY > 100 || event.velocityY > 600) {
-        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 180 }, () => {
-          runOnJS(handleDismiss)();
-        });
-      } else {
-        // Snap back smoothly
-        translateY.value = withSpring(0, { damping: 22, stiffness: 220 });
-      }
-    });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-    };
-  });
+  ).current;
 
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="none" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        {/* Backdrop touchable to tap outside */}
+        {/* Backdrop touchable */}
         <TouchableOpacity
           style={styles.backdropTouchable}
-          onPress={onClose}
+          onPress={dismiss}
           activeOpacity={1}
         />
 
-        {/* Swipeable Animated Sheet */}
-        <Animated.View style={[styles.sheetContent, contentStyle, animatedStyle]}>
-          {/* Draggable Handle Area */}
-          <GestureDetector gesture={panGesture}>
-            <View style={styles.handleHitSlop}>
-              <View style={styles.handleBar} />
-            </View>
-          </GestureDetector>
+        {/* Animated Bottom Sheet */}
+        <Animated.View
+          style={[
+            styles.sheetContent,
+            height ? { height } : null,
+            contentStyle,
+            { transform: [{ translateY }] },
+          ]}
+        >
+          {/* Draggable Handle & Header Touch Area */}
+          <View {...panResponder.panHandlers} style={styles.dragArea}>
+            <View style={styles.handleBar} />
+          </View>
 
           {children}
         </Animated.View>
@@ -103,22 +122,24 @@ const styles = StyleSheet.create({
   },
   sheetContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 16,
+    overflow: 'hidden',
   },
-  handleHitSlop: {
+  dragArea: {
     width: '100%',
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   handleBar: {
-    width: 44,
+    width: 48,
     height: 5,
     borderRadius: 3,
     backgroundColor: '#D4D4D8',
