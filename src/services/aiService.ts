@@ -4,14 +4,22 @@ import { cropImageLocally, getImageDimensions } from './imageService';
 import { CropRect, ItemCategory } from '../types';
 
 const STORAGE_KEY_GEMINI = '@styleboard_gemini_api_key_v1';
-const DEFAULT_GEMINI_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
 export const getGeminiApiKey = async (): Promise<string> => {
   try {
     const custom = await AsyncStorage.getItem(STORAGE_KEY_GEMINI);
-    return custom || DEFAULT_GEMINI_KEY;
+    if (custom && custom.trim().length > 0) return custom.trim();
+
+    if (
+      process.env.EXPO_PUBLIC_GEMINI_API_KEY &&
+      process.env.EXPO_PUBLIC_GEMINI_API_KEY.trim().length > 0
+    ) {
+      return process.env.EXPO_PUBLIC_GEMINI_API_KEY.trim();
+    }
+
+    return '';
   } catch {
-    return DEFAULT_GEMINI_KEY;
+    return '';
   }
 };
 
@@ -41,12 +49,29 @@ export const aiIsolateClothingItem = async (
   sourceUri: string
 ): Promise<AICutoutResult> => {
   const apiKey = await getGeminiApiKey();
+
+  if (!apiKey) {
+    throw new Error('Kein API-Key gefunden. Bitte trage deinen Gemini API-Key in den Einstellungen ein.');
+  }
+
   const naturalDims = await getImageDimensions(sourceUri);
 
-  // Read base64
+  // Read image as base64 safely across all protocols (file://, http://, data:)
   let base64Data = '';
   if (sourceUri.startsWith('data:')) {
     base64Data = sourceUri.split(',')[1];
+  } else if (sourceUri.startsWith('http://') || sourceUri.startsWith('https://')) {
+    const res = await fetch(sourceUri);
+    const blob = await res.blob();
+    base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   } else {
     base64Data = await FileSystem.readAsStringAsync(sourceUri, {
       encoding: FileSystem.EncodingType.Base64,
@@ -136,7 +161,6 @@ Note: Coordinates in box_2d must be normalized from 0 to 1000 tightly around the
     };
   }
 
-  // Fallback if no bounding box returned
   return {
     uri: sourceUri,
     width: naturalDims.width,
@@ -150,7 +174,7 @@ Note: Coordinates in box_2d must be normalized from 0 to 1000 tightly around the
 
 export interface AIStylistReview {
   vibe: string;
-  score: number; // 1-10
+  score: number;
   review: string;
   strengths: string[];
   recommendations: string[];
@@ -165,6 +189,10 @@ export const aiReviewOutfitComposition = async (
   hasMannequin: boolean
 ): Promise<AIStylistReview> => {
   const apiKey = await getGeminiApiKey();
+
+  if (!apiKey) {
+    throw new Error('Kein API-Key gefunden. Bitte trage deinen Gemini API-Key in den Einstellungen ein.');
+  }
 
   const itemsList = items.map((i) => `- ${i.name} (${i.category || 'Kleidung'})`).join('\n');
 
